@@ -1,0 +1,108 @@
+---
+import LazyImg from "./LazyImg.astro";
+
+export interface Item {
+  href: string;
+  title: string;
+  text?: string;
+  img?: string;
+  imgAlt?: string;
+  size?: "wide" | "standard";
+  external?: boolean;
+}
+export interface Props {
+  heading?: string;
+  subhead?: string;
+  items: Item[];
+}
+const {
+  heading = "Where do you want to start?",
+  subhead = "Explore Fernie real estate, fast.",
+  items = [],
+} = Astro.props;
+---
+
+<section class="start container" aria-labelledby="start-title">
+  <header class="head">
+    <h2 id="start-title" class="h2">{heading}</h2>
+    <p class="lead">{subhead}</p>
+  </header>
+
+  <div class="grid" role="list">
+    {items.map((it) => (
+      <a
+        role="listitem"
+        class={`card ${it.size === "wide" ? "wide" : ""}`}
+        href={it.href}
+        {...(it.external ? { rel: "noopener", target: "_blank" } : {})}
+        aria-label={it.title}
+      >
+        {it.img && (
+          <LazyImg
+            class="art"
+            src={it.img}
+            alt={it.imgAlt ?? ""}
+            width={220}
+            height={160}
+            /* stays lazy + async + low priority by default */
+          />
+        )}
+        <div class="text">
+          <h3 class="title">{it.title}</h3>
+          {it.text && <p class="desc">{it.text}</p>}
+        </div>
+        <span class="chev" aria-hidden="true">➜</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  /* Component-scoped design tokens (no :root override) */
+  .start{
+    --cards-brand: var(--brand, #2ba7ff);
+    --cards-ink: #111;
+    --cards-line: #e8ebee;
+    --cards-bg: #fff;
+    --cards-muted: #6b7280;
+    --cards-shadow: 0 6px 18px rgba(0,0,0,.08);
+    --cards-radius: 16px;
+    color: var(--cards-ink);
+  }
+
+  .container{max-width:1080px;margin-inline:auto;padding:0 clamp(12px,2.5vw,24px) clamp(12px,2.5vw,24px)}
+  .head{margin:clamp(12px,2vw,20px) 0 clamp(8px,1.5vw,14px)}
+  .h2{margin:0 0 .35rem;font-size:clamp(24px,3.2vw,36px);line-height:1.2;font-weight:900;letter-spacing:-.01em}
+  .lead{margin:0;font-size:clamp(1rem,2vw,1.125rem);color:var(--cards-muted);text-wrap:pretty}
+
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));align-items:stretch}
+
+  .card{
+    position:relative; display:grid; grid-template-columns:auto 1fr auto;
+    grid-template-areas:"art text chev"; gap:16px; padding:20px;
+    border:1px solid var(--cards-line); background:var(--cards-bg); border-radius:var(--cards-radius);
+    color:var(--cards-ink); text-decoration:none; transition:border-color .15s, box-shadow .15s, transform .15s;
+  }
+  .card:hover{border-color:var(--cards-brand);box-shadow:var(--cards-shadow);transform:translateY(-2px)}
+  .card:focus-visible{outline:2px solid var(--cards-brand);outline-offset:3px}
+
+  .card.wide{grid-column:1/-1}
+  @media (min-width:900px){
+    .grid{grid-template-columns:repeat(12,1fr)}
+    .card{grid-column:span 6}
+    .card.wide{grid-column:span 6}
+  }
+
+  .art{grid-area:art;width:140px;height:100px;object-fit:contain;object-position:left center;align-self:center}
+  .text{grid-area:text;align-self:center}
+  .title{margin:0 0 .25rem;font-weight:800;line-height:1.2;font-size:clamp(16px,1.6vw,18px)}
+  .desc{margin:0;color:var(--cards-muted);font-size:.95rem}
+  .chev{grid-area:chev;place-self:center;font-size:18px;opacity:.35;transition:opacity .15s, transform .15s}
+  .card:hover .chev{opacity:.8;transform:translateX(2px)}
+
+  @media (max-width:520px){
+    .card{grid-template-columns:1fr auto;grid-template-areas:"text chev"}
+    .art{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){.card,.chev{transition:none}}
+</style>

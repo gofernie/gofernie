@@ -1,0 +1,186 @@
+---
+export interface Props { title?: string; tagline?: string; intro?: string }
+const {
+  title = "FERNIE REAL ESTATE",
+  tagline = "BUY • SELL • INVEST WITH CONFIDENCE IN FERNIE",
+  intro
+} = Astro.props;
+
+/** Same URL logic as SiteLayout (no dev/prod mismatch) */
+const DEV = import.meta.env.DEV;
+const MASTER =
+  "https://private-office.myrealpage.com/w/w=chris-crump2.myrealpagewebsite.com,m=__manage__/_media/quick-uploads/fernie-homes1600by900cc.webp?inline=true";
+const enc = encodeURIComponent(MASTER);
+const url = (w:number, fm="avif", q=38) =>
+  DEV ? MASTER : `/.netlify/images?url=${enc}&w=${w}&fm=${fm}&q=${q}`;
+
+/* AVIF primary, WebP fallback */
+const avif480  = url(480,  "avif", 38);
+const avif800  = url(800,  "avif", 38);
+const avif1200 = url(1200, "avif", 38);
+const avif1600 = url(1600, "avif", 38);
+
+const webp480  = url(480,  "webp", 60);
+const webp800  = url(800,  "webp", 60);
+const webp1200 = url(1200, "webp", 60);
+const webp1600 = url(1600, "webp", 60);
+---
+
+<section class="hero" aria-label="Fernie real estate hero">
+  <!-- LCP background image -->
+  <picture class="hero__bgwrap" aria-hidden="true">
+    <source
+      type="image/avif"
+      srcset={`${avif480} 480w, ${avif800} 800w, ${avif1200} 1200w, ${avif1600} 1600w`}
+      sizes="100vw" />
+    <img
+      class="hero__bg"
+      src={webp480}
+      srcset={`${webp480} 480w, ${webp800} 800w, ${webp1200} 1200w, ${webp1600} 1600w`}
+      sizes="100vw"
+      width="1600" height="900"
+      alt="Fernie homes with mountain backdrop"
+      loading="eager" fetchpriority="high" />
+  </picture>
+
+  <!-- Top nav integrated into hero -->
+  <header class="hero-nav" role="navigation" aria-label="Primary">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="Fernie Real Estate">
+        <span class="brand__mark">460</span><span class="brand__text">REALTY</span>
+      </a>
+
+      <!-- Hamburger only appears when the row is tight (via @container) -->
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Open menu" />
+      <label for="nav-toggle" class="hamburger" aria-hidden="true" title="Menu">☰</label>
+
+      <nav class="menu" id="menu">
+        <ul>
+          <li><a href="/listings">Listings</a></li>
+          <li><a href="/neighbourhoods">Neighbourhoods</a></li>
+          <li><a href="/buy">Buy</a></li>
+          <li><a href="/sell">Sell</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li class="contact"><a href="/contact" class="btn">Contact Me</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero__shade" aria-hidden="true"></div>
+
+  <div class="hero__content">
+    <div class="glass">
+      <h1 class="hero__title">{title}</h1>
+      <p class="hero__tag">{tagline}</p>
+      {intro && <p class="hero__intro">{intro}</p>}
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Scoped tokens (no :root flicker) */
+  .hero{
+    --hero-ink:#fff;
+    --hero-brand: var(--brand, #2ba7ff);
+    --hero-glass-bg: rgba(20,20,20,.50);
+    --hero-glass-bd: rgba(255,255,255,.22);
+
+    position:relative;
+    max-width:none !important;
+    inline-size:100vw; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw;
+    min-height:100lvh;                      /* own the viewport so hero is LCP */
+    display:grid; place-items:center;
+    color:var(--hero-ink);
+    overflow:clip; isolation:isolate;
+    background:#0b1015;
+  }
+
+  .hero__bgwrap{ position:absolute; inset:0; z-index:-2; display:block; }
+  .hero__bg{ width:100%; height:100%; object-fit:cover; object-position:center 45%; display:block; }
+
+  .hero__shade{
+    position:absolute; inset:0; z-index:-1;
+    background:
+      radial-gradient(140% 90% at 50% 20%, rgba(0,0,0,.04) 0, rgba(0,0,0,.32) 100%),
+      linear-gradient(to top, rgba(0,0,0,.45), rgba(0,0,0,.12) 40%, rgba(0,0,0,0) 70%);
+  }
+
+  /* === NAV === */
+  .hero-nav{
+    position:absolute; inset-inline:0; top:0; z-index:10; padding-block:.75rem;
+    background:linear-gradient(to bottom, rgba(0,0,0,.40), rgba(0,0,0,0));
+  }
+  .hero-nav .wrap{
+    max-width:1200px; margin:0 auto; padding:0 1rem;
+    display:flex; align-items:center; gap:1rem;            /* force horizontal layout */
+    container-type:inline-size;
+  }
+  .hero-nav .wrap .brand{ margin-right:auto; }
+
+  .brand{
+    display:inline-flex; align-items:center; gap:.4rem;
+    color:var(--hero-ink); text-decoration:none; font-weight:800; letter-spacing:.02em;
+  }
+  .brand__mark{
+    display:inline-grid; place-items:center;
+    width:40px; height:40px; border-radius:.35rem;
+    background:var(--hero-brand); color:#fff; font-weight:900;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
+  }
+  .brand__text{ opacity:.9; font-weight:700; }
+
+  /* Desktop: inline menu (no bullets) */
+  .menu{ display:block !important; position:static !important; }
+  .menu ul{
+    display:flex !important; align-items:center; gap:1rem;
+    list-style:none !important; margin:0 !important; padding:0 !important;
+  }
+  .menu a{ color:var(--hero-ink); text-decoration:none; font-weight:600; opacity:.9; }
+  .menu a:hover{ opacity:1; text-decoration:underline; }
+
+  .btn{
+    display:inline-block; padding:.55rem .9rem; border-radius:.5rem;
+    background:var(--hero-brand); color:#fff; font-weight:700; text-decoration:none;
+    box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 18px rgba(0,0,0,.25);
+  }
+  .menu .contact{ margin-left:.25rem; }
+
+  /* Hide hamburger on desktop */
+  .hamburger{ display:none !important; }
+  .nav-toggle{ display:none !important; }
+
+  /* Collapse to dropdown when tight */
+  @container (max-width: 900px){
+    .hamburger{ display:inline-block !important; cursor:pointer; font-size:1.6rem; line-height:1; color:var(--hero-ink); padding:.25rem .5rem; }
+    .menu{
+      display:none !important;
+      position:absolute !important; top:100%; inset-inline:0;
+      background:rgba(12,12,12,.86); backdrop-filter:blur(6px);
+      border-top:1px solid rgba(255,255,255,.15);
+    }
+    .menu ul{ flex-direction:column; align-items:flex-start; gap:.25rem; padding:.75rem 1rem !important; }
+    .nav-toggle:checked ~ .menu{ display:block !important; }
+  }
+
+  /* === HERO CONTENT === */
+  .hero__content{ position:relative; width:100%; max-width:1200px; padding:0 1rem; display:grid; justify-items:end; }
+  .glass{
+    max-width:min(46rem,92vw);
+    background:var(--hero-glass-bg);
+    border:1px solid var(--hero-glass-bd);
+    border-radius:.5rem;
+    padding:1.25rem 1.25rem 1.35rem;
+    box-shadow:0 10px 30px rgba(0,0,0,.22);
+  }
+  .hero__title{ margin:0 0 .2rem; font-size:clamp(1.8rem,5vw,3rem); line-height:1.05; font-weight:900; letter-spacing:.02em; }
+  .hero__tag{ margin:0 0 .75rem; font-weight:800; opacity:.9; letter-spacing:.08em; font-size:.9rem; }
+  .hero__intro{ margin:0; font-size:clamp(1rem,2vw,1.05rem); line-height:1.6; opacity:.95; }
+
+  @media (max-width:700px){ .hero__content{ justify-items:center; } .glass{ text-align:left; } }
+
+  /* Final guardrails: keep everything inside the hero white */
+  .hero, .hero a, .hero .brand, .hero .menu a, .hero .hero__title,
+  .hero .hero__tag, .hero .hero__intro, .hero .btn{ color:#fff !important; }
+</style>

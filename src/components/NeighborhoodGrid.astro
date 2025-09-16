@@ -1,0 +1,105 @@
+---
+// Neighborhood/Neighbourhood Grid (safe version)
+// Accepts either:
+//   - items = [{ name, slug, blurb?, url? }]
+//   - links = [{ title|name, slug, blurb|desc?, url? }]
+const p = Astro.props;
+const raw = (p.items ?? p.links ?? []).filter(Boolean);
+
+// normalize to { name, url, blurb }
+function lastSegment(u) {
+  try {
+    const parts = new URL(u, 'https://example.com').pathname.split('/').filter(Boolean);
+    return parts[parts.length - 1] || '';
+  } catch { return ''; }
+}
+
+const items = raw.map(r => {
+  const name = r.name ?? r.title ?? r.text ?? r.label ?? 'Untitled';
+  const slug = r.slug ?? (r.url ? lastSegment(r.url) : '');
+  const url  = r.url ?? (slug ? `/neighbourhoods/${slug}/` : '#');
+  const blurb = r.blurb ?? r.desc ?? '';
+  return { name, url, blurb };
+});
+---
+
+<section class="ng container" aria-label="Neighbourhoods">
+  {items.map((n) => (
+    <a class="ng__card" href={n.url} aria-label={`${n.name} guide`}>
+      <div class="ng__text">
+        <h3 class="ng__name">{n.name}</h3>
+        {n.blurb && <p class="ng__blurb">{n.blurb}</p>}
+      </div>
+      <span class="ng__chev" aria-hidden="true">›</span>
+    </a>
+  ))}
+</section>
+
+<style>
+  /* Namespaced so global styles can’t override */
+  .ng{
+    display:grid;
+    gap:1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  @media (max-width: 900px){
+    .ng{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px){
+    .ng{ grid-template-columns: 1fr; }
+  }
+
+  .ng__card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+
+    padding:1.1rem 1rem;
+    background:#fff;
+    border:1px solid var(--line, #e5e7eb);
+    border-radius: var(--radius, 14px);
+    text-decoration:none;
+    color: var(--ink, #0f172a);
+
+    transform: translateY(0);
+    transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+  }
+
+  .ng__text{ flex:1; min-width:0; }
+  .ng__name{
+    margin:0;
+    font-size:1.05rem;
+    font-weight:700;
+  }
+  .ng__blurb{
+    margin:.4rem 0 0 0;
+    color: var(--muted, #6b7280);
+    font-size:.95rem;
+  }
+
+  /* Match mini-card interaction with brand blue */
+  .ng__card:hover{
+    border-color: rgba(9,113,206,.35); /* #0971ce */
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
+    transform: translateY(-2px);
+  }
+  .ng__card:active{ transform: translateY(0); }
+  .ng__card:focus-visible{
+    outline: 2px solid #0971ce;
+    outline-offset: 3px;
+    border-radius: calc(var(--radius, 14px) + 2px);
+  }
+
+  .ng__chev{
+    font-size:1.4rem;
+    color: var(--muted, #6b7280);
+    transition: transform .15s ease, color .15s ease;
+    flex-shrink:0;
+    margin-left:.5rem;
+  }
+  .ng__card:hover .ng__chev{
+    transform: translateX(3px);
+    color:#0971ce;
+  }
+</style>

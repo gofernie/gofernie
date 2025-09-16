@@ -1,0 +1,36 @@
+---
+export interface Props {
+  src: string;
+  alt: string;
+  width: number | string;
+  height: number | string;
+  class?: string;
+  srcset?: string;
+  sizes?: string;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "sync" | "auto";
+  fetchpriority?: "low" | "high" | "auto";
+  style?: string;
+}
+const {
+  src, alt, width, height, class: cls, srcset, sizes,
+  loading = "lazy",
+  decoding = "async",
+  fetchpriority = "low",
+  style
+} = Astro.props;
+---
+
+<img
+  class={cls}
+  src={src}
+  srcset={srcset}
+  sizes={sizes}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={loading}
+  decoding={decoding}
+  fetchpriority={fetchpriority}
+  style={style}
+/>

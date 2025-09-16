@@ -1,0 +1,135 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getRows } from '../../lib/sheets';
+
+const toTitle = (s='') => s.replace(/[-_]/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+
+// ✅ Only these slugs should render as neighbourhoods
+const ALLOWED = new Set([
+  'riverside',
+  'alpine-trails',
+  'the-annex',
+  'montane',
+  'ridgemont',
+  'ski-hill',
+  'the-cedars',
+]);
+
+// ✅ Optional fallback images (put files in /public/images/neighbourhoods/)
+const FALLBACK_IMG = {
+  'ski-hill': '/images/neighbourhoods/ski-hill.jpg',
+  // add more if you want guarantees for others:
+  // 'riverside': '/images/neighbourhoods/riverside.jpg',
+};
+
+let items = [];
+let err = null;
+
+try {
+  const rows = await getRows();
+
+  items = (rows ?? [])
+    .filter(r => (r.slug || '').trim()) // must have slug
+    .filter(r => ALLOWED.has(String(r.slug).trim())) // only expected neighbourhoods
+    .filter(r => !r.published || String(r.published).toUpperCase() === 'TRUE') // published only
+    .map(r => {
+      const slug = (r.slug || '').trim();
+      return {
+        slug,
+        title: (r.title || '').trim() || toTitle(slug),
+        img: (r.img || '').trim() || FALLBACK_IMG[slug] || '',
+        excerpt: (r.desc || r.excerpt || '').trim(),
+        order: Number(r.order || 999),
+      };
+    })
+    .sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
+} catch(e:any){
+  err = e?.message || String(e);
+}
+---
+
+<SiteLayout title="Neighbourhood Guides" description="Explore Fernie neighbourhoods." showHero={false}>
+  <h1 class="container">Neighbourhood Guides</h1>
+
+  {err ? (
+    <pre class="container error">{err}</pre>
+  ) : (
+    <section class="grid container" aria-label="Neighbourhoods">
+      {items.map(n => (
+        <a class="card" href={`/neighbourhoods/${n.slug}/`} aria-label={`${n.title} guide`}>
+          {n.img && (
+            <img
+              class="thumb"
+              src={n.img}
+              alt={n.title}
+              width="640"
+              height="480"
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+          <div class="pad">
+            <div class="title">{n.title}</div>
+            {n.excerpt && <div class="excerpt">{n.excerpt}</div>}
+          </div>
+        </a>
+      ))}
+    </section>
+  )}
+
+  <style slot="head">
+    .grid{
+      display:grid;
+      gap:1rem;
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      align-items:stretch;
+    }
+
+    .card{
+      border:1px solid var(--line,#e5e7eb);
+      border-radius:var(--radius,14px);
+      background:#fff;
+      overflow:hidden;
+
+      display:flex; flex-direction:column; height:100%;
+      color:inherit; text-decoration:none;
+
+      transform:translateY(0);
+      transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+    }
+    .card:hover{
+      border-color:#0971ce;
+      box-shadow:0 6px 18px rgba(0,0,0,.12);
+      transform:translateY(-3px);
+    }
+    .card:focus-visible{
+      outline:2px solid #0971ce;
+      outline-offset:3px;
+      border-radius:calc(var(--radius,14px) + 2px);
+    }
+
+    .thumb{
+      display:block; width:100%; height:auto;
+      aspect-ratio:4/3; object-fit:cover; flex:0 0 auto;
+    }
+
+    .pad{
+      padding:.85rem 1rem;
+      display:flex; flex-direction:column; gap:.35rem;
+      flex:1 1 auto; min-height:92px;
+    }
+    .title{
+      font-weight:800; margin:0; line-height:1.2;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .excerpt{
+      color:var(--muted,#6b7280); font-size:.95rem; margin:0;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    }
+
+    .error{
+      background:#fff3f3; border:1px solid #ffd0d0; padding:1rem;
+      border-radius:12px; white-space:pre-wrap; margin-top:.75rem;
+    }
+  </style>
+</SiteLayout>

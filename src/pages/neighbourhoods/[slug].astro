@@ -1,0 +1,212 @@
+---
+// src/pages/neighbourhoods/[slug].astro
+// Live-edit mode: fetches the Google Sheet on each request.
+// Switch back to prerender=true + getStaticPaths() when you're done editing.
+export const prerender = false;
+
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { getRows } from "../../lib/sheets";
+
+const { slug } = Astro.params;
+
+// Fetch rows live
+const rows = await getRows();
+const row = (rows ?? []).find(r => (r.slug || "").trim() === slug);
+if (!row) throw new Error(`Neighbourhood not found for slug: ${slug}`);
+
+const toTitle = (s='') => s.replace(/[-_]/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+
+const title = (row.title || toTitle(row.slug)).trim();
+const desc  = (row.desc  || row.excerpt || "").trim();
+const hero  = (row.img   || "").trim();
+
+// Build rich About HTML from sheet (supports raw HTML or plain text)
+const aboutRaw = (row.about || "").trim();
+
+function decodeHtmlEntities(s: string) {
+  return s
+    .replaceAll("&lt;","<")
+    .replaceAll("&gt;",">")
+    .replaceAll("&amp;","&")
+    .replaceAll("&quot;",'"')
+    .replaceAll("&#39;","'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)));
+}
+
+function buildAboutHtml(input: string) {
+  if (!input) return "";
+  const decoded = decodeHtmlEntities(input);
+
+  // If you typed HTML in the cell, use it directly
+  if (/<(p|br|ul|ol|li|h\d|strong|em|a|blockquote|img)\b/i.test(decoded)) {
+    return decoded;
+  }
+  // Otherwise convert newlines into paragraphs
+  const norm = decoded.replace(/\r\n/g, "\n");
+  const hasBlank = /\n\s*\n/.test(norm);
+  const parts = hasBlank ? norm.split(/\n\s*\n/) : norm.split(/\n/);
+  return parts.map(p => `<p>${p}</p>`).join("\n");
+}
+
+const aboutHtml = buildAboutHtml(aboutRaw);
+const hasAbout = aboutHtml.length > 0;
+
+// Optional facts pulled from sheet
+const facts = [
+  row.walk || row.walkscore ? { label: "Walkability",   value: row.walk || row.walkscore } : null,
+  row.bike ?                  { label: "Bikeability",    value: row.bike }                 : null,
+  row.schools ?               { label: "Nearby schools", value: row.schools }              : null,
+  row.vibe ?                  { label: "Vibe",           value: row.vibe }                 : null,
+  row.commute ?               { label: "Downtown access",value: row.commute }              : null,
+].filter(Boolean);
+---
+
+<SiteLayout title={title} description={desc} showHero={false}>
+  <section class={`container nbh ${hasAbout ? "" : "nbh--noabout"}`}>
+    <header class="nbh__head">
+      <h1 class="nbh__title">{title}</h1>
+      {desc && <p class="nbh__lead">{desc}</p>}
+    </header>
+
+    {hero
+      ? <figure class="nbh__hero">
+          <img
+            src={hero}
+            alt={`Scene from ${title}`}
+            loading="lazy"
+            decoding="async"
+            width="1280"
+            height="720"
+            sizes="(max-width: 900px) 100vw, 1100px"
+            referrerpolicy="no-referrer"
+            onerror={`this.onerror=null; this.src='/images/neighbourhoods/${row.slug}.jpg';`}
+          />
+        </figure>
+      : <div class="nbh__hero nbh__hero--placeholder" aria-hidden="true"></div>
+    }
+
+    <div class="nbh__grid">
+      {hasAbout && (
+        <article class="nbh__main">
+          <h2>About {title}</h2>
+          {/* This div is what renders your sheet HTML */}
+          <div class="about" set:html={aboutHtml} />
+        </article>
+      )}
+
+      <aside class="nbh__aside">
+        {facts.length > 0 && (
+          <div class="card">
+            <h3>Key facts</h3>
+            <ul class="facts">
+              {facts.map(f => (
+                <li><span>{f.label}</span><strong>{f.value}</strong></li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div class="card cta">
+          <h3>Thinking of moving to {title}?</h3>
+          <p>Get local advice and a hand-picked shortlist of homes.</p>
+          <a class="btn" href="/contact/">Book a call</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+</SiteLayout>
+
+<style>
+  .nbh{ padding-top:1rem; padding-bottom:2rem; }
+
+  /* Header */
+  .nbh__head{ margin:0 0 1rem; }
+  .nbh__title{ margin:0 0 .25rem; font-size:2rem; font-weight:800; color:var(--ink,#0f172a); }
+  .nbh__lead{ margin:.25rem 0 0; color:var(--muted,#6b7280); font-size:1.05rem; }
+
+  /* Hero */
+  .nbh__hero{
+    margin:1rem 0 1.25rem;
+    border-radius: var(--radius,14px);
+    overflow:hidden;
+    background:#f3f4f6;
+    line-height:0;
+  }
+  .nbh__hero img{ display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; }
+  .nbh__hero--placeholder{ height:clamp(180px,38vw,520px); }
+
+  /* Content grid */
+  .nbh__grid{ display:grid; grid-template-columns: 2fr 1fr; gap:1.25rem; }
+  .nbh--noabout .nbh__grid{ grid-template-columns: 1fr; }
+
+  .nbh__main{
+    background:#fff;
+    border:1px solid var(--line,#e5e7eb);
+    border-radius: var(--radius,14px);
+    padding:1rem 1.15rem;
+  }
+  .nbh__main h2{ margin:.25rem 0 .75rem; font-size:1.2rem; }
+
+  .nbh__aside{ display:flex; flex-direction:column; gap:1rem; }
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line,#e5e7eb);
+    border-radius: var(--radius,14px);
+    padding:1rem;
+    transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+  }
+  .card:hover{
+    border-color: rgba(9,113,206,.35);
+    box-shadow:0 6px 18px rgba(0,0,0,.06);
+    transform: translateY(-1px);
+  }
+  .card h3{ margin:0 0 .5rem; font-size:1.05rem; }
+
+  .facts{ list-style:none; padding:0; margin:0; display:grid; gap:.5rem; }
+  .facts li{ display:flex; justify-content:space-between; gap:.75rem; }
+  .facts li span{ color:var(--muted,#6b7280); }
+  .facts li strong{ font-weight:700; }
+
+  .btn{
+    display:inline-block; margin-top:.5rem; padding:.6rem .9rem;
+    border-radius:12px; background:#0971ce; color:#fff; text-decoration:none; font-weight:700;
+    transition: filter .15s ease, transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{ filter:brightness(1.05); transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.08); }
+  .btn:focus-visible{ outline:2px solid #0971ce; outline-offset:3px; }
+
+  /* ── About content (from your sheet) ───────────────────────── */
+  .about p{
+    margin:0 0 .75rem;
+    line-height:1.65;
+    color:var(--ink,#0f172a);
+  }
+  .about a{
+    color:#0971ce;
+    text-underline-offset: 2px;
+  }
+  .about ul, .about ol{
+    margin:.5rem 0 .75rem 1.25rem;
+    padding:0;
+  }
+  .about li{ margin:.25rem 0; }
+
+  .about h3{
+    font-size:6.2rem;
+    font-weight:700;
+    margin-top:1.2rem;
+    margin-bottom:.4rem;
+    color:var(--ink,#0f172a);
+    display:flex;
+    align-items:center;
+    gap:.35em;
+  }
+  .about h3:first-of-type{ margin-top:0; }
+  :global(.about h3){
+    font-size:25px; font-weight:400;
+    margin-top:1.2rem; margin-bottom:.4rem;
+    color:var(--ink,#0f172a);
+  }
+</style>

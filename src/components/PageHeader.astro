@@ -1,0 +1,90 @@
+---
+export interface Props {
+  kicker?: string;   // small eyebrow, e.g. "Neighbourhoods"
+  title: string;
+  intro?: string;
+  ctaHref?: string;
+  ctaLabel?: string;
+  align?: "start" | "center"; // optional alignment tweak
+}
+const { kicker, title, intro, ctaHref, ctaLabel = "Contact Me", align = "start" } = Astro.props;
+---
+
+<header class={`pagehead ${align === "center" ? "center" : ""}`} aria-label="page header">
+  <div class="wrap">
+    <div class="text">
+      {kicker && <p class="eyebrow">{kicker}</p>}
+      <h1 class="h1">{title}</h1>
+      {intro && <p class="lead">{intro}</p>}
+    </div>
+    {ctaHref && (
+      <p class="actions">
+        <a class="btn" href={ctaHref}>{ctaLabel}</a>
+      </p>
+    )}
+  </div>
+</header>
+
+<style>
+  :root{
+    --brand:#2ba7ff;
+    --ink:#111;
+  }
+  .pagehead{
+    padding: clamp(20px, 4vw, 40px) 0;
+    border-bottom: 1px solid #eceff1;
+    background: #fff; /* fast: no image */
+    color: var(--ink);
+  }
+  .pagehead .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding: 0 clamp(12px,2.5vw,24px);
+    display:grid;
+    grid-template-columns: 1fr auto;
+    gap: clamp(12px, 2vw, 24px);
+    align-items: end;
+  }
+  .pagehead.center .wrap{
+    justify-items:center;
+    grid-template-columns: 1fr;
+    text-align:center;
+  }
+  .eyebrow{
+    margin:0 0 .25rem;
+    font-size: .8rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.7;
+  }
+  .h1{
+    margin:0 0 .6rem;
+    font-size: clamp(28px, 3.2vw, 44px);
+    line-height:1.1;
+    font-weight: 900;
+    letter-spacing:-.01em;
+    text-wrap: balance;
+  }
+  .lead{
+    margin:0;
+    max-width: 68ch;
+    font-size: clamp(1rem, 2.2vw, 1.125rem);
+    line-height:1.6;
+    opacity:.9;
+    text-wrap: pretty;
+  }
+  .btn{
+    display:inline-block;
+    padding:.55rem .9rem;
+    border-radius:.5rem;
+    background:var(--brand);
+    color:#fff; text-decoration:none; font-weight:700;
+    box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 18px rgba(0,0,0,.15);
+    white-space:nowrap;
+  }
+  @media (max-width: 720px){
+    .pagehead .wrap{ grid-template-columns: 1fr; align-items: start; }
+    .actions{ justify-self: start; }
+    .pagehead.center .actions{ justify-self:center; }
+  }
+</style>

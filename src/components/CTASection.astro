@@ -1,0 +1,20 @@
+---
+const { title, blurb, ctaText, ctaHref } = Astro.props;
+---
+<style>
+  .wrap {
+    border:1px solid #e5e7eb; border-radius:14px; padding:18px;
+    background:linear-gradient(180deg,#f0fff4, #fff);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .title { font-weight:700; font-size:1.2rem; }
+  .muted { color:#64748b; }
+  .btn { align-self:flex-start; display:inline-block; padding:.6rem .95rem; border-radius:999px;
+         border:1px solid #16a34a; background:#16a34a; color:#fff; text-decoration:none; font-weight:600; }
+</style>
+
+<section class="wrap">
+  <div class="title">{title}</div>
+  <div class="muted">{blurb}</div>
+  <a class="btn" href={ctaHref}>{ctaText}</a>
+</section>

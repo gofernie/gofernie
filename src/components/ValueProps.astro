@@ -1,0 +1,50 @@
+---
+/**
+ * ValueProps.astro
+ * Props:
+ *  - items?: Array<{ icon?: string; title: string; text: string }>
+ *  - title?: string
+ *  - cols?: 2 | 3 | 4  (grid columns)
+ */
+const {
+  items = [
+    { icon: "🗺️", title: "Local Expertise", text: "Decades of Fernie market knowledge." },
+    { icon: "📊", title: "Smart Pricing",   text: "Data-driven strategy for buyers & sellers." },
+    { icon: "🤝", title: "End-to-End Help", text: "From tours to closing, we’ve got you." },
+  ],
+  title = "Why work with us",
+  cols = 3,
+} = Astro.props;
+---
+
+<section class="vp container">
+  <h2 class="vp__title">{title}</h2>
+  <div class="vp__grid cols-{cols}">
+    {items.map((i) => (
+      <div class="vp__card">
+        {i.icon && <div class="vp__icon">{i.icon}</div>}
+        <div class="vp__head">{i.title}</div>
+        <div class="vp__text">{i.text}</div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .vp__title{ margin:0 0 .75rem; font-weight:800; font-size:1.25rem; color:var(--ink,#0f172a); }
+  .vp__grid{ display:grid; gap:1rem; }
+  .cols-2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .cols-3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .cols-4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+  @media (max-width:900px){ .cols-4,.cols-3{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:560px){ .cols-4,.cols-3,.cols-2{ grid-template-columns:1fr; } }
+
+  .vp__card{
+    background:#fff; border:1px solid var(--line,#e5e7eb); border-radius:var(--radius,14px);
+    padding:1rem; transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+  }
+  .vp__card:hover{ border-color:rgba(9,113,206,.35); box-shadow:0 6px 18px rgba(0,0,0,.08); transform:translateY(-2px); }
+  .vp__icon{ font-size:1.5rem; line-height:1; margin-bottom:.5rem; }
+  .vp__head{ font-weight:700; margin:0 0 .25rem; }
+  .vp__text{ color:var(--muted,#6b7280); }
+</style>

@@ -1,0 +1,150 @@
+---
+/**
+ * NeighborhoodMini.astro
+ * Compact home-page grid of neighbourhood cards
+ *
+ * Props:
+ *  - items: Array<{ name:string; slug:string; blurb?:string; img?:string }>
+ *  - title?: string
+ *  - limit?: number         // show first N (adds "See All" card if more exist)
+ *  - seeAllUrl?: string     // URL for the "See All" card (default: /neighbourhoods/)
+ */
+const {
+  items = [],
+  title = 'Explore Neighbourhoods',
+  limit,
+  seeAllUrl = '/neighbourhoods/',
+} = Astro.props;
+
+let list = Array.isArray(items) ? (limit ? items.slice(0, limit) : items) : [];
+if (limit && items.length > limit) {
+  list = [...list, { special: true }];
+}
+---
+
+<section class="nh container">
+  <h2 class="nh__title">{title}</h2>
+
+  {list.length > 0 ? (
+    <div class="nh__grid" role="list">
+      {list.map((n) => (
+        n?.special ? (
+          <a class="nh__card nh__card--special" href={seeAllUrl} role="listitem" aria-label="See all neighbourhoods">
+            <div class="nh__text">
+              <h3 class="nh__name nh__name--special">See All Neighbourhoods</h3>
+              <p class="nh__blurb nh__blurb--uncropped">Browse the complete guide</p>
+            </div>
+            <span class="nh__chev" aria-hidden="true">›</span>
+          </a>
+        ) : (
+          <a class="nh__card" role="listitem" href={`/neighbourhoods/${n.slug}/`} aria-label={`${n.name} guide`}>
+            {n.img && (
+              <img
+                src={n.img}
+                alt=""
+                class="nh__thumb"
+                loading="lazy"
+                decoding="async"
+                width="48"
+                height="48"
+              />
+            )}
+            <div class="nh__text">
+              <h3 class="nh__name">{n.name}</h3>
+              {n.blurb && <p class="nh__blurb">{n.blurb}</p>}
+            </div>
+            <span class="nh__chev" aria-hidden="true">›</span>
+          </a>
+        )
+      ))}
+    </div>
+  ) : (
+    <p class="nh__empty">No neighbourhoods yet.</p>
+  )}
+</section>
+
+<style>
+  /* Layout */
+  .nh{ margin-top:1rem; }
+  .nh__title{ margin:0 0 .75rem; font-size:1.25rem; font-weight:800; color:var(--ink,#0f172a); }
+
+  .nh__grid{
+    display:grid; gap:.85rem;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+  }
+  @media (max-width:900px){ .nh__grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width:560px){ .nh__grid{ grid-template-columns: 1fr; } }
+
+  /* Card */
+  .nh__card{
+    display:flex; align-items:center; gap:.75rem;
+    padding:.7rem .9rem;
+    background:#fff;
+    border:1px solid var(--line,#e5e7eb);
+    border-radius: var(--radius,14px);
+    text-decoration:none;
+    color:var(--ink,#0f172a);
+    transition: box-shadow .18s ease, transform .12s ease, border-color .18s ease;
+  }
+  .nh__card:hover{
+    border-color: rgba(9,113,206,.35);
+    box-shadow:0 6px 18px rgba(0,0,0,.06);
+    transform:translateY(-1px);
+  }
+  .nh__card:focus-visible{
+    outline:2px solid #0971ce;
+    outline-offset:3px;
+    border-radius:calc(var(--radius,14px)+2px);
+  }
+
+  /* Thumb: HARD LOCK 48×48 even if a global img rule sets width:100% */
+  .nh__thumb{
+    width:48px !important;
+    height:48px !important;
+    object-fit:cover;
+    border-radius:8px;
+    background:#f3f4f6;
+    flex-shrink:0;
+    display:block;
+  }
+  .nh__card > img.nh__thumb{ width:48px !important; height:48px !important; }
+
+  /* Text */
+  .nh__text{ flex:1; min-width:0; }
+  .nh__name{ margin:0; font-size:1rem; font-weight:700; }
+  .nh__blurb{
+    margin:.25rem 0 0;
+    font-size:.88rem;
+    color:var(--muted,#6b7280);
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .nh__blurb--uncropped{ display:block; -webkit-line-clamp:unset; }
+
+  /* Special CTA card with brand blue tint */
+  .nh__card--special{
+    justify-content:center;
+    text-align:center;
+    background: rgba(9,113,206,0.06);
+    border: 1px solid rgba(9,113,206,0.25);
+  }
+  .nh__name--special{ color:#0971ce; font-weight:700; }
+  .nh__card--special .nh__chev{ color:#0971ce; }
+  .nh__card--special:hover{
+    background: rgba(9,113,206,0.10);
+    border-color: rgba(9,113,206,0.40);
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+  }
+
+  /* Chevron */
+  .nh__chev{
+    font-size:1.4rem;
+    color:var(--muted,#6b7280);
+    transition:transform .15s ease;
+  }
+  .nh__card:hover .nh__chev{ transform:translateX(3px); }
+
+  .nh__empty{ color:var(--muted,#6b7280); }
+</style>

@@ -1,0 +1,68 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+import Hero from "../components/Hero.astro";
+import HomeCards from "../components/HomeCards.astro";
+
+/* Card data for the grid */
+const items = [
+  {
+    href: "/listings",
+    title: "Browse all listings",
+    text: "Homes, condos, and land for sale in Fernie.",
+    img: "/images/illus-listings.png",
+    size: "wide",
+  },
+  {
+    href: "/sell",
+    title: "What’s my home worth?",
+    text: "Free market analysis & pricing strategy.",
+    img: "/images/illus-home-worth.png",
+    size: "wide",
+  },
+  {
+    href: "/neighbourhoods",
+    title: "Neighbourhood guides",
+    text: "Get a feel for each area before you buy.",
+    img: "/images/illus-neighbourhoods.png",
+  },
+  {
+    href: "/buy",
+    title: "Buy with confidence",
+    text: "Process, costs, and local tips for buying in Fernie.",
+    img: "/images/illus-buy.png",
+  },
+  {
+    href: "/market",
+    title: "Market insights",
+    text: "Monthly stats & trends at a glance.",
+    img: "/images/illus-market.png",
+  },
+  {
+    href: "/contact",
+    title: "Talk to Chris",
+    text: "Ask anything — I’m local and happy to help.",
+    img: "/images/illus-contact.png",
+  },
+];
+---
+
+<SiteLayout
+  title="Fernie Real Estate"
+  description="Fernie neighbourhoods, listings, and market insights."
+>
+  <!-- Full-bleed, fast LCP hero -->
+  <Hero
+    title="FERNIE REAL ESTATE"
+    tagline="BUY • SELL • INVEST WITH CONFIDENCE IN FERNIE"
+    intro="Local guidance for buying and selling homes, condos, and land in Fernie, BC."
+  />
+
+  <!-- Wealthsimple-style cards -->
+  <HomeCards
+    heading="Where do you want to start?"
+    subhead="Open listings, neighbourhoods, and local expertise — all in one place."
+    items={items}
+  />
+
+  <!-- Add other sections below if you want (Featured listings, value props, etc.) -->
+</SiteLayout>
