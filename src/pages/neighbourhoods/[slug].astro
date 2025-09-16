@@ -1,22 +1,30 @@
 ---
-// src/pages/neighbourhoods/[slug].astro
-// Live-edit mode: fetches the Google Sheet on each request.
-// Switch back to prerender=true + getStaticPaths() when you're done editing.
-export const prerender = false;
-
+/* src/pages/neighbourhoods/[slug].astro
+   Fully static: builds every neighbourhood page at deploy time.
+*/
 import SiteLayout from "../../layouts/SiteLayout.astro";
 import { getRows } from "../../lib/sheets";
 
-const { slug } = Astro.params;
+export const prerender = true;
 
-// Fetch rows live
-const rows = await getRows();
-const row = (rows ?? []).find(r => (r.slug || "").trim() === slug);
-if (!row) throw new Error(`Neighbourhood not found for slug: ${slug}`);
+// Build-time: enumerate all slugs and pass each row as props
+export async function getStaticPaths() {
+  const rows = await getRows();
 
-const toTitle = (s='') => s.replace(/[-_]/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+  return (rows ?? [])
+    .filter(r => (r?.slug ?? "").trim().length > 0)
+    .map(r => ({
+      params: { slug: String(r.slug).trim() },
+      props: { row: r }, // available below as Astro.props.row
+    }));
+}
 
-const title = (row.title || toTitle(row.slug)).trim();
+const { row } = Astro.props;
+
+const toTitle = (s = "") =>
+  s.replace(/[-_]/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+
+const title = (row.title || toTitle(row.slug || "")).trim();
 const desc  = (row.desc  || row.excerpt || "").trim();
 const hero  = (row.img   || "").trim();
 
@@ -25,11 +33,11 @@ const aboutRaw = (row.about || "").trim();
 
 function decodeHtmlEntities(s: string) {
   return s
-    .replaceAll("&lt;","<")
-    .replaceAll("&gt;",">")
-    .replaceAll("&amp;","&")
-    .replaceAll("&quot;",'"')
-    .replaceAll("&#39;","'")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)));
 }
@@ -46,7 +54,7 @@ function buildAboutHtml(input: string) {
   const norm = decoded.replace(/\r\n/g, "\n");
   const hasBlank = /\n\s*\n/.test(norm);
   const parts = hasBlank ? norm.split(/\n\s*\n/) : norm.split(/\n/);
-  return parts.map(p => `<p>${p}</p>`).join("\n");
+  return parts.map((p) => `<p>${p}</p>`).join("\n");
 }
 
 const aboutHtml = buildAboutHtml(aboutRaw);
@@ -100,7 +108,7 @@ const facts = [
           <div class="card">
             <h3>Key facts</h3>
             <ul class="facts">
-              {facts.map(f => (
+              {facts.map((f) => (
                 <li><span>{f.label}</span><strong>{f.value}</strong></li>
               ))}
             </ul>
